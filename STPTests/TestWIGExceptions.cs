@@ -3,6 +3,7 @@ using System;
 using NUnit.Framework;
 
 using Amib.Threading;
+using System.Threading;
 
 namespace WorkItemsGroupTests
 {
@@ -79,7 +80,7 @@ namespace WorkItemsGroupTests
 			Assert.IsTrue(e is DivideByZeroException);
 		} 
 
-		private object DoDiv(object state)
+		private object DoDiv(object state, CancellationToken cancellationToken)
 		{ 
 			DivArgs divArgs = (DivArgs)state;
 			return (divArgs.x / divArgs.y);

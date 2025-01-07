@@ -30,7 +30,7 @@ namespace SmartThreadPoolTests
 
 	        SmartThreadPool stp = new SmartThreadPool(stpStartInfo);
 
-	        IWorkItemResult<ApartmentState> wir = stp.QueueWorkItem(() => GetCurrentThreadApartmentState());
+	        IWorkItemResult<ApartmentState> wir = stp.QueueWorkItem((CancellationToken cancellationToken) => GetCurrentThreadApartmentState());
 
 	        ApartmentState resultApartmentState = wir.GetResult();
 

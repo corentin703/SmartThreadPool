@@ -67,7 +67,7 @@ namespace SmartThreadPoolTests
             return 1;
         }
 
-		private object DoWaitForIdle(object state)
+		private object DoWaitForIdle(object state, CancellationToken cancellationToken)
 		{ 
 			SmartThreadPool smartThreadPool = state as SmartThreadPool;
 			smartThreadPool.WaitForIdle();

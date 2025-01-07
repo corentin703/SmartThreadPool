@@ -648,7 +648,7 @@ namespace SmartThreadPoolTests
                 _state = state;
             }
 
-            public object CompareWorkItemInfo(object state)
+            public object CompareWorkItemInfo(object state, CancellationToken cancellationToken)
             {
                 bool equals = object.Equals(_state, state);
                 if (equals)

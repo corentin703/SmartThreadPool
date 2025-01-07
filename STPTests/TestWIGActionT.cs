@@ -1,5 +1,6 @@
 using Amib.Threading;
 using NUnit.Framework;
+using System.Threading;
 
 namespace WorkItemsGroupTests
 {
@@ -89,27 +90,27 @@ namespace WorkItemsGroupTests
             Assert.AreEqual(_result, new int[] { 2, 3, 2, 3, 2, 3, });
         }
 
-        private void MaxInt()
+        private void MaxInt(CancellationToken cancellationToken)
         {
             _result = int.MaxValue;
         }
 
-        private void Not(bool flag)
+        private void Not(bool flag, CancellationToken cancellationToken)
         {
             _result = !flag;
         }
 
-        private void Concat(string s1, string s2)
+        private void Concat(string s1, string s2, CancellationToken cancellationToken)
         {
             _result = s1 + s2;
         }
 
-        private void Substring(string s, int startIndex, int length)
+        private void Substring(string s, int startIndex, int length, CancellationToken cancellationToken)
         {
             _result = s.Substring(startIndex, length);
         }
 
-        private void Subarray(int[] numbers, int startIndex, int length, int repeat)
+        private void Subarray(int[] numbers, int startIndex, int length, int repeat, CancellationToken cancellationToken)
         {
             int[] result = new int[length * repeat];
             for (int i = 0; i < repeat; i++)

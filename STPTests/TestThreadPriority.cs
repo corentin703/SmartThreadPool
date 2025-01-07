@@ -64,7 +64,7 @@ namespace SmartThreadPoolTests
             Assert.AreEqual(threadPriority, currentThreadPriority);
 		}
 
-		private object GetThreadPriority(object state)
+		private object GetThreadPriority(object state, CancellationToken cancellationToken)
 		{ 
 			return Thread.CurrentThread.Priority;
 		}

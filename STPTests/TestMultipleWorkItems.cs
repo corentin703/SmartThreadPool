@@ -218,7 +218,7 @@ namespace SmartThreadPoolTests
 			Assert.IsTrue(success);
 		}
 
-		private object DoSomeWork(object state)
+		private object DoSomeWork(object state, CancellationToken cancellationToken)
 		{ 
 			Thread.Sleep(1000);
 			return 1;
@@ -235,7 +235,7 @@ namespace SmartThreadPoolTests
 
             for (int i = 0; i < wirs.Length; ++i)
             {
-                wirs[i] = smartThreadPool.QueueWorkItem(new Func<int, int, int>(System.Math.Min), i, i + 1);
+                wirs[i] = smartThreadPool.QueueWorkItem(new Func<int, int, CancellationToken, int>((val1, val2, cancellationToken) => System.Math.Max(val1, val2)), i, i);
             }
 
             SmartThreadPool.WaitAll(wirs);
@@ -272,7 +272,7 @@ namespace SmartThreadPoolTests
 
             for (int i = 0; i < wirs.Length; ++i)
             {
-                wirs[i] = smartThreadPool.QueueWorkItem(new Func<int, int, int>(System.Math.Max), i, i - 1);
+                wirs[i] = smartThreadPool.QueueWorkItem(new Func<int, int, CancellationToken, int>((val1, val2, cancellationToken) => System.Math.Max(val1, val2)), i, i - 1);
             }
 
             int index = SmartThreadPool.WaitAny(wirs);
@@ -290,6 +290,5 @@ namespace SmartThreadPoolTests
 
             Assert.IsTrue(success);
         } 
-
-	}
+    }
 }

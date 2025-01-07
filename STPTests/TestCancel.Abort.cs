@@ -83,7 +83,7 @@ namespace SmartThreadPoolTests
 
                 SmartThreadPool stp = new SmartThreadPool();
                 IWorkItemResult wir = stp.QueueWorkItem(
-                    state =>
+                    (cancellationToken, state) =>
                     {
                         waitToStart.Set();
                         Thread.Sleep(100);
@@ -130,8 +130,8 @@ namespace SmartThreadPoolTests
             for (int i = 0; i < 10; i++)
             {
                 stp.QueueWorkItem(
-                    state =>  { Thread.Sleep(500); ++counter; return null; }
-                    );
+                    (cancellationToken, state) =>  { Thread.Sleep(500); ++counter; return null; }
+                );
             }
 
             Thread.Sleep(100);
@@ -165,8 +165,8 @@ namespace SmartThreadPoolTests
             for (int i = 0; i < 10; i++)
             {
                 wig.QueueWorkItem(
-                    state => { Thread.Sleep(500); ++counter; return null; }
-                    );
+                    (cancellationToken, state) => { Thread.Sleep(500); ++counter; return null; }
+                );
             }
 
             Thread.Sleep(100);
@@ -204,15 +204,34 @@ namespace SmartThreadPoolTests
             for (int i = 0; i < 3; i++)
             {
                 wig1.QueueWorkItem(
-                    state => { Interlocked.Increment(ref counter1); Thread.Sleep(500); Interlocked.Increment(ref counter1); return null; }
-                    );
+                    (state, cancellationToken) => 
+                    {
+                        Interlocked.Increment(ref counter1); 
+                        Thread.Sleep(500);
+
+                        if (cancellationToken.IsCancellationRequested)
+                            return null;
+
+                        Interlocked.Increment(ref counter1); 
+                        return null;
+                    }
+                );
             }
 
             for (int i = 0; i < 3; i++)
             {
                 wig2.QueueWorkItem(
-                    state => { Thread.Sleep(500); Interlocked.Increment(ref counter2); return null; }
-                    );
+                    (state, cancellationToken) => 
+                    { 
+                        Thread.Sleep(500);
+
+                        if (cancellationToken.IsCancellationRequested)
+                            return null;
+
+                        Interlocked.Increment(ref counter2);
+                        return null; 
+                    }
+                );
             }
 
             while (counter1 < 3)

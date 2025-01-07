@@ -87,7 +87,7 @@ namespace WorkItemsGroupTests
 
 
         private int _x = 0;
-        private object DoSomeWork(object state)
+        private object DoSomeWork(object state, CancellationToken cancellationToken)
         {
             int sleepTime = (int)state;
             int newX = Interlocked.Increment(ref _x);
@@ -99,7 +99,7 @@ namespace WorkItemsGroupTests
             return 1;
         }
 
-		private object DoWaitForIdle(object state)
+		private object DoWaitForIdle(object state, CancellationToken cancellationToken)
 		{ 
 			IWorkItemsGroup workItemsGroup = state as IWorkItemsGroup;
 			workItemsGroup.WaitForIdle();
@@ -162,7 +162,7 @@ namespace WorkItemsGroupTests
 
             workItemsGroup.OnIdle += wig => wigIsIdle.Set();
 
-            workItemsGroup.QueueWorkItem(() => { });
+            workItemsGroup.QueueWorkItem((_) => { });
 
             bool eventFired = wigIsIdle.WaitOne(100, true);
 

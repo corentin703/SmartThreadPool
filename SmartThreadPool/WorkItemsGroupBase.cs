@@ -13,11 +13,21 @@ namespace Amib.Threading.Internal
         /// </summary>
         private string _name = "WorkItemsGroupBase";
 
-        public WorkItemsGroupBase()
+        public WorkItemsGroupBase(CancellationTokenSource parentSource)
+        {
+            IsIdle = true;
+            WorkItemCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(parentSource.Token);
+        }
+
+        public WorkItemsGroupBase() : this(new CancellationTokenSource())
         {
             IsIdle = true;
         }
 
+        #endregion
+
+        #region ProtectedFields
+        protected CancellationTokenSource WorkItemCancellationTokenSource { get; private set; }
         #endregion
 
         #region IWorkItemsGroup Members
@@ -96,7 +106,7 @@ namespace Amib.Threading.Internal
         /// <returns>Returns a work item result</returns>
         public IWorkItemResult QueueWorkItem(WorkItemCallback callback)
         {
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -110,7 +120,7 @@ namespace Amib.Threading.Internal
         public IWorkItemResult QueueWorkItem(WorkItemCallback callback, WorkItemPriority workItemPriority)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, workItemPriority);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, workItemPriority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -124,7 +134,7 @@ namespace Amib.Threading.Internal
         public IWorkItemResult QueueWorkItem(WorkItemInfo workItemInfo, WorkItemCallback callback)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, workItemInfo, callback);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, workItemInfo, callback, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -139,7 +149,7 @@ namespace Amib.Threading.Internal
         /// <returns>Returns a work item result</returns>
         public IWorkItemResult QueueWorkItem(WorkItemCallback callback, object state)
         {
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -156,7 +166,7 @@ namespace Amib.Threading.Internal
         public IWorkItemResult QueueWorkItem(WorkItemCallback callback, object state, WorkItemPriority workItemPriority)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, workItemPriority);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, workItemPriority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -173,7 +183,7 @@ namespace Amib.Threading.Internal
         public IWorkItemResult QueueWorkItem(WorkItemInfo workItemInfo, WorkItemCallback callback, object state)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, workItemInfo, callback, state);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, workItemInfo, callback, state, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -195,7 +205,7 @@ namespace Amib.Threading.Internal
             PostExecuteWorkItemCallback postExecuteWorkItemCallback)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -219,7 +229,7 @@ namespace Amib.Threading.Internal
             WorkItemPriority workItemPriority)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback, workItemPriority);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback, workItemPriority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -243,7 +253,7 @@ namespace Amib.Threading.Internal
             CallToPostExecute callToPostExecute)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback, callToPostExecute);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback, callToPostExecute, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -269,7 +279,7 @@ namespace Amib.Threading.Internal
             WorkItemPriority workItemPriority)
         {
             PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback, callToPostExecute, workItemPriority);
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(this, WIGStartInfo, callback, state, postExecuteWorkItemCallback, callToPostExecute, workItemPriority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return workItem.GetWorkItemResult();
         }
@@ -278,82 +288,82 @@ namespace Amib.Threading.Internal
 
         #region QueueWorkItem(Action<...>)
 
-        public IWorkItemResult QueueWorkItem(Action action, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+        public IWorkItemResult QueueWorkItem(Action<CancellationToken> action, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem ();
             WorkItem workItem = WorkItemFactory.CreateWorkItem (
                 this,
                 WIGStartInfo,
-                delegate
+                (state, cancellationToken) => 
                 {
-                    action.Invoke ();
+                    action.Invoke (cancellationToken);
                     return null;
-                }, priority);
+                }, priority, WorkItemCancellationTokenSource.Token);
             Enqueue (workItem);
             return workItem.GetWorkItemResult ();
         }
 
-        public IWorkItemResult QueueWorkItem<T>(Action<T> action, T arg, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+        public IWorkItemResult QueueWorkItem<T>(Action<T, CancellationToken> action, T arg, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem ();
             WorkItem workItem = WorkItemFactory.CreateWorkItem (
                 this,
                 WIGStartInfo,
-                state =>
+                (state, cancellationToken) =>
                 {
-                    action.Invoke (arg);
+                    action.Invoke (arg, cancellationToken);
                     return null;
                 },
-                WIGStartInfo.FillStateWithArgs ? new object[] { arg } : null, priority);
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg } : null, priority, WorkItemCancellationTokenSource.Token);
             Enqueue (workItem);
             return workItem.GetWorkItemResult ();
         }
 
-        public IWorkItemResult QueueWorkItem<T1, T2>(Action<T1, T2> action, T1 arg1, T2 arg2, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+        public IWorkItemResult QueueWorkItem<T1, T2>(Action<T1, T2, CancellationToken> action, T1 arg1, T2 arg2, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem ();
             WorkItem workItem = WorkItemFactory.CreateWorkItem (
                 this,
                 WIGStartInfo,
-                state =>
+                (state, cancellationToken) =>
                 {
-                    action.Invoke (arg1, arg2);
+                    action.Invoke (arg1, arg2, cancellationToken);
                     return null;
                 },
-                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2 } : null, priority);
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2 } : null, priority, WorkItemCancellationTokenSource.Token);
             Enqueue (workItem);
             return workItem.GetWorkItemResult ();
         }
 
-        public IWorkItemResult QueueWorkItem<T1, T2, T3>(Action<T1, T2, T3> action, T1 arg1, T2 arg2, T3 arg3, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+        public IWorkItemResult QueueWorkItem<T1, T2, T3>(Action<T1, T2, T3, CancellationToken> action, T1 arg1, T2 arg2, T3 arg3, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem ();
             WorkItem workItem = WorkItemFactory.CreateWorkItem (
                 this,
                 WIGStartInfo,
-                state =>
+                (state, cancellationToken) =>
                 {
-                    action.Invoke (arg1, arg2, arg3);
+                    action.Invoke (arg1, arg2, arg3, cancellationToken);
                     return null;
                 },
-                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3 } : null, priority);
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3 } : null, priority, WorkItemCancellationTokenSource.Token);
             Enqueue (workItem);
             return workItem.GetWorkItemResult ();
         }
 
         public IWorkItemResult QueueWorkItem<T1, T2, T3, T4> (
-            Action<T1, T2, T3, T4> action, T1 arg1, T2 arg2, T3 arg3, T4 arg4, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+            Action<T1, T2, T3, T4, CancellationToken> action, T1 arg1, T2 arg2, T3 arg3, T4 arg4, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem ();
             WorkItem workItem = WorkItemFactory.CreateWorkItem (
-                           this,
-                           WIGStartInfo,
-                           state =>
-                           {
-                               action.Invoke (arg1, arg2, arg3, arg4);
-                               return null;
-                           },
-                           WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3, arg4 } : null, priority);
+                this,
+                WIGStartInfo,
+                (state, cancellationToken) =>
+                {
+                    action.Invoke (arg1, arg2, arg3, arg4, cancellationToken);
+                    return null;
+                },
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3, arg4 } : null, priority, WorkItemCancellationTokenSource.Token);
             Enqueue (workItem);
             return workItem.GetWorkItemResult ();
         }
@@ -362,82 +372,82 @@ namespace Amib.Threading.Internal
 
         #region QueueWorkItem(Func<...>)
 
-        public IWorkItemResult<TResult> QueueWorkItem<TResult>(Func<TResult> func, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
-        {
-            PreQueueWorkItem();
-            WorkItem workItem = WorkItemFactory.CreateWorkItem(
-                            this,
-                            WIGStartInfo,
-                            state =>
-                            {
-                                return func.Invoke();
-                            }, priority);
-            Enqueue(workItem);
-            return new WorkItemResultTWrapper<TResult>(workItem.GetWorkItemResult());
-        }
-
-        public IWorkItemResult<TResult> QueueWorkItem<T, TResult>(Func<T, TResult> func, T arg, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+        public IWorkItemResult<TResult> QueueWorkItem<TResult>(Func<CancellationToken, TResult> func, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem();
             WorkItem workItem = WorkItemFactory.CreateWorkItem(
                 this,
                 WIGStartInfo,
-                state =>
+                (state, cancellationToken) =>
                 {
-                    return func.Invoke(arg);
-                },
-                WIGStartInfo.FillStateWithArgs ? new object[] { arg } : null,
-                priority);
+                    return func.Invoke(cancellationToken);
+                }, priority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return new WorkItemResultTWrapper<TResult>(workItem.GetWorkItemResult());
         }
 
-        public IWorkItemResult<TResult> QueueWorkItem<T1, T2, TResult>(Func<T1, T2, TResult> func, T1 arg1, T2 arg2, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+        public IWorkItemResult<TResult> QueueWorkItem<T, TResult>(Func<T, CancellationToken, TResult> func, T arg, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem();
             WorkItem workItem = WorkItemFactory.CreateWorkItem(
-                            this,
-                            WIGStartInfo,
-                            state =>
-                            {
-                                return func.Invoke(arg1, arg2);
-                            },
-                           WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2 } : null,
-                           priority);
+                this,
+                WIGStartInfo,
+                (state, cancellationToken) =>
+                {
+                    return func.Invoke(arg, cancellationToken);
+                },
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg } : null,
+                priority, WorkItemCancellationTokenSource.Token);
+            Enqueue(workItem);
+            return new WorkItemResultTWrapper<TResult>(workItem.GetWorkItemResult());
+        }
+
+        public IWorkItemResult<TResult> QueueWorkItem<T1, T2, TResult>(Func<T1, T2, CancellationToken, TResult> func, T1 arg1, T2 arg2, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+        {
+            PreQueueWorkItem();
+            WorkItem workItem = WorkItemFactory.CreateWorkItem(
+                this,
+                WIGStartInfo,
+                (state, cancellationToken) =>
+                {
+                    return func.Invoke(arg1, arg2, cancellationToken);
+                },
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2 } : null,
+                priority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return new WorkItemResultTWrapper<TResult>(workItem.GetWorkItemResult());
         }
 
         public IWorkItemResult<TResult> QueueWorkItem<T1, T2, T3, TResult>(
-            Func<T1, T2, T3, TResult> func, T1 arg1, T2 arg2, T3 arg3, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+            Func<T1, T2, T3, CancellationToken, TResult> func, T1 arg1, T2 arg2, T3 arg3, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem();
             WorkItem workItem = WorkItemFactory.CreateWorkItem(
-                            this,
-                            WIGStartInfo,
-                            state =>
-                            {
-                                return func.Invoke(arg1, arg2, arg3);
-                            },
-                           WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3 } : null,
-                           priority);
+                this,
+                WIGStartInfo,
+                (state, cancellationToken) =>
+                {
+                    return func.Invoke(arg1, arg2, arg3, cancellationToken);
+                },
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3 } : null,
+                priority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return new WorkItemResultTWrapper<TResult>(workItem.GetWorkItemResult());
         }
 
         public IWorkItemResult<TResult> QueueWorkItem<T1, T2, T3, T4, TResult>(
-            Func<T1, T2, T3, T4, TResult> func, T1 arg1, T2 arg2, T3 arg3, T4 arg4, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
+            Func<T1, T2, T3, T4, CancellationToken, TResult> func, T1 arg1, T2 arg2, T3 arg3, T4 arg4, WorkItemPriority priority = SmartThreadPool.DefaultWorkItemPriority)
         {
             PreQueueWorkItem();
             WorkItem workItem = WorkItemFactory.CreateWorkItem(
-                            this,
-                            WIGStartInfo,
-                            state =>
-                            {
-                                return func.Invoke(arg1, arg2, arg3, arg4);
-                            },
-                           WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3, arg4 } : null,
-                           priority);
+                this,
+                WIGStartInfo,
+                (state, cancellationToken) =>
+                {
+                    return func.Invoke(arg1, arg2, arg3, arg4, cancellationToken);
+                },
+                WIGStartInfo.FillStateWithArgs ? new object[] { arg1, arg2, arg3, arg4 } : null,
+                priority, WorkItemCancellationTokenSource.Token);
             Enqueue(workItem);
             return new WorkItemResultTWrapper<TResult>(workItem.GetWorkItemResult());
         }

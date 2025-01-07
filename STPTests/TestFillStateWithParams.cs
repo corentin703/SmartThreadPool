@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System.Net;
 using Guid = System.Guid;
 using IntPtr = System.IntPtr;
+using System.Threading;
 
 namespace STPTests
 {
@@ -98,14 +99,14 @@ namespace STPTests
         [Test]
         public void FuncT0()
         {
-            IWorkItemResult<int> wir = _stp.QueueWorkItem(new Func<int>(Func0));
+            IWorkItemResult<int> wir = _stp.QueueWorkItem(new Func<CancellationToken, int>(Func0));
             Assert.AreEqual(wir.State, null);
         }
 
         [Test]
         public void FuncT1()
         {
-            IWorkItemResult<bool> wir = _stp.QueueWorkItem(new Func<int, bool>(Func1), 17);
+            IWorkItemResult<bool> wir = _stp.QueueWorkItem(new Func<int, CancellationToken, bool>(Func1), 17);
             object[] args = wir.State as object[];
 
             Assert.IsNotNull(args);
@@ -116,7 +117,7 @@ namespace STPTests
         [Test]
         public void FuncT2()
         {
-            IWorkItemResult<string> wir = _stp.QueueWorkItem(new Func<char, string, string>(Func2), 'a', "bla bla");
+            IWorkItemResult<string> wir = _stp.QueueWorkItem(new Func<char, string, CancellationToken, string>(Func2), 'a', "bla bla");
             object[] args = wir.State as object[];
 
             Assert.IsNotNull(args);
@@ -131,7 +132,7 @@ namespace STPTests
             char[] chars = new char[] { 'a', 'b' };
             object obj = new object();
 
-            IWorkItemResult<char> wir = _stp.QueueWorkItem(new Func<bool, char[], object, char>(Func3), true, chars, obj);
+            IWorkItemResult<char> wir = _stp.QueueWorkItem(new Func<bool, char[], object, CancellationToken, char>(Func3), true, chars, obj);
             object[] args = wir.State as object[];
 
             Assert.IsNotNull(args);
@@ -148,7 +149,7 @@ namespace STPTests
             Guid guid = Guid.NewGuid();
 
             IPAddress ip = IPAddress.Parse("1.2.3.4");
-            IWorkItemResult<IPAddress> wir = _stp.QueueWorkItem(new Func<long, IntPtr, IPAddress, Guid, IPAddress>(Func4), long.MinValue, p, ip, guid);
+            IWorkItemResult<IPAddress> wir = _stp.QueueWorkItem(new Func<long, IntPtr, IPAddress, Guid, CancellationToken, IPAddress>(Func4), long.MinValue, p, ip, guid);
             
             object[] args = wir.State as object[];
 
@@ -161,47 +162,47 @@ namespace STPTests
         }
 
 
-        private void Action0()
+        private void Action0(CancellationToken cancellationToken)
         {
         }
 
-        private void Action1(int p1)
+        private void Action1(int p1, CancellationToken cancellationToken)
         {
         }
 
-        private void Action2(char p1, string p2)
+        private void Action2(char p1, string p2, CancellationToken cancellationToken)
         {
         }
 
-        private void Action3(bool p1, char [] p2, object p3)
+        private void Action3(bool p1, char [] p2, object p3, CancellationToken cancellationToken)
         {
         }
 
-        private void Action4(long p1, IntPtr p2, IPAddress p3, Guid p4)
+        private void Action4(long p1, IntPtr p2, IPAddress p3, Guid p4, CancellationToken cancellationToken)
         {
         }
 
-        private int Func0()
+        private int Func0(CancellationToken cancellationToken)
         {
             return 0;
         }
 
-        private bool Func1(int p1)
+        private bool Func1(int p1, CancellationToken cancellationToken)
         {
             return true;
         }
 
-        private string Func2(char p1, string p2)
+        private string Func2(char p1, string p2, CancellationToken cancellationToken)
         {
             return "value";
         }
 
-        private char Func3(bool p1, char[] p2, object p3)
+        private char Func3(bool p1, char[] p2, object p3, CancellationToken cancellationToken)
         {
             return 'z';
         }
 
-        private IPAddress Func4(long p1, IntPtr p2, IPAddress p3, Guid p4)
+        private IPAddress Func4(long p1, IntPtr p2, IPAddress p3, Guid p4, CancellationToken cancellationToken)
         {
             return IPAddress.None;
         }

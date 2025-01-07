@@ -235,14 +235,14 @@ namespace Amib.Threading.Internal
             }
         }
 
-		private object FireOnIdle(object state)
+		private object FireOnIdle(object state, CancellationToken cancellationToken)
 		{
-			FireOnIdleImpl(_onIdle);
+			FireOnIdleImpl(_onIdle, cancellationToken);
 			return null;
 		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		private void FireOnIdleImpl(WorkItemsGroupIdleHandler onIdle)
+		private void FireOnIdleImpl(WorkItemsGroupIdleHandler onIdle, CancellationToken cancellationToken)
 		{
 			if(null == onIdle)
 			{
@@ -254,9 +254,15 @@ namespace Amib.Threading.Internal
 			{
 				try
 				{
-					eh(this);
+					if (cancellationToken.IsCancellationRequested)
+						eh.EndInvoke(null);
+					else 
+						eh(this);
 				}
-                catch { }  // Suppress exceptions
+                catch
+				{
+					// Suppress exceptions
+				}  
 			}
 		}
 

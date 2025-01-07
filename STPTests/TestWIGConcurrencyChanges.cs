@@ -125,13 +125,13 @@ namespace WorkItemsGroupTests
         }
 
         private ManualResetEvent _pauseSTP = new ManualResetEvent(false);
-        private object DoPauseSTP(object state)
+        private object DoPauseSTP(object state, CancellationToken cancellationToken)
         {
             _pauseSTP.WaitOne();
             return 1;
         }
 
-        private object DoSomeWork(object state)
+        private object DoSomeWork(object state, CancellationToken cancellationToken)
         {
             return 1;
         }
@@ -183,7 +183,7 @@ namespace WorkItemsGroupTests
             return success;
         }
 
-        private object DoSomeLongWork(object state)
+        private object DoSomeLongWork(object state, CancellationToken cancellationToken)
         {
             Thread.Sleep(250);
             return 1;

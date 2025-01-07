@@ -63,6 +63,11 @@ namespace Amib.Threading.Internal
         /// </summary>
         private object _state;
 
+        /// <summary>
+        /// CancellationToken for th callback.
+        /// </summary>
+        private CancellationToken _cancellationToken;
+
 #if (NETFRAMEWORK)
         /// <summary>
         /// Stores the caller's context
@@ -199,6 +204,7 @@ namespace Amib.Threading.Internal
         /// <param name="workItemInfo">The WorkItemInfo of te workitem</param>
         /// <param name="callback">Callback delegate for the callback.</param>
         /// <param name="state">State with which to call the callback delegate.</param>
+        /// <param name="cancellationToken">State with which to call the callback delegate.</param>
         /// 
         /// We assume that the WorkItem object is created within the thread
         /// that meant to run the callback
@@ -206,7 +212,8 @@ namespace Amib.Threading.Internal
             IWorkItemsGroup workItemsGroup,
             WorkItemInfo workItemInfo,
             WorkItemCallback callback,
-            object state)
+            object state,
+            CancellationToken cancellationToken)
         {
             _workItemsGroup = workItemsGroup;
             _workItemInfo = workItemInfo;
@@ -220,6 +227,7 @@ namespace Amib.Threading.Internal
 
             _callback = callback;
             _state = state;
+            _cancellationToken = cancellationToken;
             _workItemResult = new WorkItemResult(this);
             Initialize();
         }
@@ -378,7 +386,7 @@ namespace Amib.Threading.Internal
             {
                 try
                 {
-                    result = _callback(_state);
+                    result = _callback(_state, _cancellationToken);
                 }
                 catch (Exception e)
                 {
@@ -723,10 +731,10 @@ namespace Amib.Threading.Internal
                             Thread executionThread = Interlocked.CompareExchange(ref _executingThread, null, _executingThread);
                             if (null != executionThread)
                             {
-                                executionThread.Abort(); // "Cancel"
+                                //executionThread.Abort(); // "Cancel"
                                 // No need to signalComplete, because we already cancelled this work item
                                 // so it already signaled its completion.
-                                //signalComplete = true;
+                                signalComplete = true;
                             }
                         } 
                         success = true;
@@ -740,7 +748,7 @@ namespace Amib.Threading.Internal
                             Thread executionThread = Interlocked.CompareExchange(ref _executingThread, null, _executingThread);
                             if (null != executionThread)
                             {
-                                executionThread.Abort(); // "Cancel"
+                                //executionThread.Abort(); // "Cancel"
                                 success = true;
                                 signalComplete = true;
                             }

@@ -57,7 +57,7 @@ namespace SmartThreadPoolTests
             stp.OnThreadInitialization += OnInitialization;
             stp.OnThreadTermination += OnTermination;
 
-            stp.QueueWorkItem(new WorkItemCallback(DoSomeWork), null);
+            stp.QueueWorkItem(DoSomeWork, null);
 
             stp.WaitForIdle();
 
@@ -74,7 +74,7 @@ namespace SmartThreadPoolTests
             _initSuccess = true;
         }
 
-        private object DoSomeWork(object state)
+        private object DoSomeWork(object state, CancellationToken cancellationToken)
         {
             int counter = ThreadContextState.Current.Counter;
             _workItemSuccess = (1234 == counter);
@@ -102,12 +102,12 @@ namespace SmartThreadPoolTests
             SmartThreadPool stp = new SmartThreadPool(stpStartInfo);
             stp.Start();
 
-            IWorkItemResult<bool> wir = stp.QueueWorkItem(() => AllocateBufferOnStack(10 * 1024));
+            IWorkItemResult<bool> wir = stp.QueueWorkItem((cancellationToken) => AllocateBufferOnStack(10 * 1024));
 
             bool result = wir.GetResult();
             Assert.IsTrue(result);
 
-            wir = stp.QueueWorkItem(() => AllocateBufferOnStack(1000 * 1024));
+            wir = stp.QueueWorkItem((cancellationToken) => AllocateBufferOnStack(1000 * 1024));
 
             result = wir.GetResult();
             Assert.IsFalse(result);

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using System.Threading;
 using Amib.Threading;
 using NUnit.Framework;
 
@@ -19,7 +19,7 @@ namespace STPTests
         {
             SmartThreadPool stp = new SmartThreadPool();
             IWorkItemResult<int> wir = 
-                stp.QueueWorkItem(new Func<int, int>(f), 1);
+                stp.QueueWorkItem(new Func<int, CancellationToken, int>(f), 1);
 
             int y = wir.GetResult();
 
@@ -35,7 +35,7 @@ namespace STPTests
             }
         }
 
-        private int f(int x)
+        private int f(int x, CancellationToken cancellationToken)
         {
             return x + 1;
         }

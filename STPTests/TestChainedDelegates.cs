@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 
 using Amib.Threading;
+using System.Threading;
 
 namespace SmartThreadPoolTests
 {
@@ -81,7 +82,7 @@ namespace SmartThreadPoolTests
 		}
 
 
-		private object DoWork(object state)
+		private object DoWork(object state, CancellationToken cancellationToken)
 		{
 			return null;
 		}

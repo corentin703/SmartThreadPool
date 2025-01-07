@@ -30,7 +30,7 @@ namespace SmartThreadPoolTests
 
 	        SmartThreadPool stp = new SmartThreadPool(stpStartInfo);
 
-            IWorkItemResult<bool> wir = stp.QueueWorkItem(() => GetCurrentThreadIsBackground());
+            IWorkItemResult<bool> wir = stp.QueueWorkItem((CancellationToken cancellationToken) => GetCurrentThreadIsBackground());
 
 	        bool resultIsBackground = wir.GetResult();
 

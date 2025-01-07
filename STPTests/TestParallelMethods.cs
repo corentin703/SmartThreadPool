@@ -32,7 +32,7 @@ namespace SmartThreadPoolTests
 		    {
                 sc.Reset();
 
-                Action[] actions = new Action[1000];
+                Action<CancellationToken>[] actions = new Action<CancellationToken>[1000];
                 for (int i = 0; i < actions.Length; i++)
                 {
                     actions[i] = sc.Increment;
@@ -50,7 +50,7 @@ namespace SmartThreadPoolTests
         {
             private int _counter;
 
-            public void Increment()
+            public void Increment(CancellationToken cancellationToken)
             {
                 Interlocked.Increment(ref _counter);
             }
@@ -72,16 +72,16 @@ namespace SmartThreadPoolTests
 	        SmartThreadPool stp = new SmartThreadPool();
 
 	        int index = stp.Choice(
-	            () => Thread.Sleep(1000),
-	            () => Thread.Sleep(1500),
-	            () => Thread.Sleep(500));
+	            (cancellationToken) => Thread.Sleep(1000),
+	            (cancellationToken) => Thread.Sleep(1500),
+	            (cancellationToken) => Thread.Sleep(500));
 
 	        Assert.AreEqual(2, index);  
             
 	        index = stp.Choice(
-	            () => Thread.Sleep(300),
-	            () => Thread.Sleep(100),
-	            () => Thread.Sleep(200));
+	            (cancellationToken) => Thread.Sleep(300),
+	            (cancellationToken) => Thread.Sleep(100),
+	            (cancellationToken) => Thread.Sleep(200));
 
 	        Assert.AreEqual(1, index);
 
@@ -96,9 +96,9 @@ namespace SmartThreadPoolTests
 
             stp.Pipe(
                 sc,
-                sc1 => { if (sc.Counter == 0) { sc1.Increment(); }}, 
-                sc1 => { if (sc.Counter == 1) { sc1.Increment(); }}, 
-                sc1 => { if (sc.Counter == 2) { sc1.Increment(); }} 
+                (sc1, cancellationToken) => { if (sc.Counter == 0) { sc1.Increment(cancellationToken); }}, 
+                (sc1, cancellationToken) => { if (sc.Counter == 1) { sc1.Increment(cancellationToken); }}, 
+                (sc1, cancellationToken) => { if (sc.Counter == 2) { sc1.Increment(cancellationToken); }} 
                 );
 
             Assert.AreEqual(3, sc.Counter);

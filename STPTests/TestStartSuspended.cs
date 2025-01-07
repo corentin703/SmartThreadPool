@@ -105,7 +105,7 @@ namespace SmartThreadPoolTests
 		}
 
 
-		private object DoWork(object state)
+		private object DoWork(object state, CancellationToken cancellationToken)
 		{
 			Thread.Sleep(100);
 			return null;

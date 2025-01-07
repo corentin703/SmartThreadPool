@@ -128,7 +128,7 @@ namespace WorkItemsGroupTests
             Assert.IsTrue(success);
         } 
 
-        private object DoSomeWork(object state)
+        private object DoSomeWork(object state, CancellationToken cancellationToken)
         { 
             Thread.Sleep(1000);
             return 1;

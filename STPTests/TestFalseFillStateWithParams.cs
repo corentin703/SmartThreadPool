@@ -2,6 +2,7 @@ using System;
 using Amib.Threading;
 using NUnit.Framework;
 using System.Net;
+using System.Threading;
 
 namespace STPTests
 {
@@ -74,21 +75,21 @@ namespace STPTests
         [Test]
         public void STPFuncT0()
         {
-            IWorkItemResult<int> wir = _stp.QueueWorkItem(new Func<int>(Func0));
+            IWorkItemResult<int> wir = _stp.QueueWorkItem(new Func<CancellationToken, int>(Func0));
             Assert.IsNull(wir.State);
         }
 
         [Test]
         public void STPFuncT1()
         {
-            IWorkItemResult<bool> wir = _stp.QueueWorkItem(new Func<int, bool>(Func1), 17);
+            IWorkItemResult<bool> wir = _stp.QueueWorkItem(new Func<int, CancellationToken, bool>(Func1), 17);
             Assert.IsNull(wir.State);
         }
 
         [Test]
         public void STPFuncT2()
         {
-            IWorkItemResult<string> wir = _stp.QueueWorkItem(new Func<char, string, string>(Func2), 'a', "bla bla");
+            IWorkItemResult<string> wir = _stp.QueueWorkItem(new Func<char, string, CancellationToken, string>(Func2), 'a', "bla bla");
             Assert.IsNull(wir.State);
         }
 
@@ -98,7 +99,7 @@ namespace STPTests
             char[] chars = new char[] { 'a', 'b' };
             object obj = new object();
 
-            IWorkItemResult<char> wir = _stp.QueueWorkItem(new Func<bool, char[], object, char>(Func3), true, chars, obj);
+            IWorkItemResult<char> wir = _stp.QueueWorkItem(new Func<bool, char[], object, CancellationToken, char>(Func3), true, chars, obj);
             Assert.IsNull(wir.State);
         }
 
@@ -109,7 +110,7 @@ namespace STPTests
             Guid guid = Guid.NewGuid();
 
             IPAddress ip = IPAddress.Parse("1.2.3.4");
-            IWorkItemResult<IPAddress> wir = _stp.QueueWorkItem(new Func<long, IntPtr, IPAddress, Guid, IPAddress>(Func4), long.MinValue, p, ip, guid);
+            IWorkItemResult<IPAddress> wir = _stp.QueueWorkItem(new Func<long, IntPtr, IPAddress, Guid, CancellationToken, IPAddress>(Func4), long.MinValue, p, ip, guid);
             Assert.IsNull(wir.State);
         }
 
@@ -158,21 +159,21 @@ namespace STPTests
         [Test]
         public void WIGFuncT0()
         {
-            IWorkItemResult<int> wir = _wig.QueueWorkItem(new Func<int>(Func0));
+            IWorkItemResult<int> wir = _wig.QueueWorkItem(new Func<CancellationToken, int>(Func0));
             Assert.IsNull(wir.State);
         }
 
         [Test]
         public void WIGFuncT1()
         {
-            IWorkItemResult<bool> wir = _wig.QueueWorkItem(new Func<int, bool>(Func1), 17);
+            IWorkItemResult<bool> wir = _wig.QueueWorkItem(new Func<int, CancellationToken, bool>(Func1), 17);
             Assert.IsNull(wir.State);
         }
 
         [Test]
         public void WIGFuncT2()
         {
-            IWorkItemResult<string> wir = _wig.QueueWorkItem(new Func<char, string, string>(Func2), 'a', "bla bla");
+            IWorkItemResult<string> wir = _wig.QueueWorkItem(new Func<char, string, CancellationToken, string>(Func2), 'a', "bla bla");
             Assert.IsNull(wir.State);
         }
 
@@ -182,7 +183,7 @@ namespace STPTests
             char[] chars = new char[] { 'a', 'b' };
             object obj = new object();
 
-            IWorkItemResult<char> wir = _wig.QueueWorkItem(new Func<bool, char[], object, char>(Func3), true, chars, obj);
+            IWorkItemResult<char> wir = _wig.QueueWorkItem(new Func<bool, char[], object, CancellationToken, char>(Func3), true, chars, obj);
             Assert.IsNull(wir.State);
         }
 
@@ -193,52 +194,52 @@ namespace STPTests
             Guid guid = Guid.NewGuid();
 
             IPAddress ip = IPAddress.Parse("1.2.3.4");
-            IWorkItemResult<IPAddress> wir = _wig.QueueWorkItem(new Func<long, IntPtr, IPAddress, Guid, IPAddress>(Func4), long.MinValue, p, ip, guid);
+            IWorkItemResult<IPAddress> wir = _wig.QueueWorkItem(new Func<long, IntPtr, IPAddress, Guid, CancellationToken, IPAddress>(Func4), long.MinValue, p, ip, guid);
             Assert.IsNull(wir.State);
         }
 
 
-        private void Action0()
+        private void Action0(CancellationToken cancellationToken)
         {
         }
 
-        private void Action1(int p1)
+        private void Action1(int p1, CancellationToken cancellationToken)
         {
         }
 
-        private void Action2(char p1, string p2)
+        private void Action2(char p1, string p2, CancellationToken cancellationToken)
         {
         }
 
-        private void Action3(bool p1, char[] p2, object p3)
+        private void Action3(bool p1, char[] p2, object p3, CancellationToken cancellationToken)
         {
         }
 
-        private void Action4(long p1, IntPtr p2, IPAddress p3, Guid p4)
+        private void Action4(long p1, IntPtr p2, IPAddress p3, Guid p4, CancellationToken cancellationToken)
         {
         }
 
-        private int Func0()
+        private int Func0(CancellationToken cancellationToken)
         {
             return 0;
         }
 
-        private bool Func1(int p1)
+        private bool Func1(int p1, CancellationToken cancellationToken)
         {
             return true;
         }
 
-        private string Func2(char p1, string p2)
+        private string Func2(char p1, string p2, CancellationToken cancellationToken)
         {
             return "value";
         }
 
-        private char Func3(bool p1, char[] p2, object p3)
+        private char Func3(bool p1, char[] p2, object p3, CancellationToken cancellationToken)
         {
             return 'z';
         }
 
-        private IPAddress Func4(long p1, IntPtr p2, IPAddress p3, Guid p4)
+        private IPAddress Func4(long p1, IntPtr p2, IPAddress p3, Guid p4, CancellationToken cancellationToken)
         {
             return IPAddress.None;
         }

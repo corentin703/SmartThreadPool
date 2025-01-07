@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Amib.Threading;
 using NUnit.Framework;
 
@@ -75,7 +76,7 @@ namespace SmartThreadPoolTests
 			Assert.IsTrue(e is DivideByZeroException);
 		}
 
-        private object DoDiv(object state)
+        private object DoDiv(object state, CancellationToken cancellationToken)
         {
             DivArgs divArgs = (DivArgs)state;
             return (divArgs.x / divArgs.y);
@@ -86,7 +87,7 @@ namespace SmartThreadPoolTests
 		{ 
 			SmartThreadPool smartThreadPool = new SmartThreadPool();
 
-	        var workItemResult = smartThreadPool.QueueWorkItem(new Func<int>(ExceptionMethod));
+	        var workItemResult = smartThreadPool.QueueWorkItem(new Func<CancellationToken, int>(ExceptionMethod));
 
             smartThreadPool.WaitForIdle();
 
@@ -95,7 +96,7 @@ namespace SmartThreadPoolTests
             smartThreadPool.Shutdown();
         }
 
-	    public int ExceptionMethod()
+	    public int ExceptionMethod(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

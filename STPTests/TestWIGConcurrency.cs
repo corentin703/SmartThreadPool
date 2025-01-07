@@ -76,7 +76,7 @@ namespace WorkItemsGroupTests
 			stp.Shutdown();
 		}
 
-		private object DoWork(object state)
+		private object DoWork(object state, CancellationToken cancellationToken)
 		{
 			int wigsIndex = (int)state;
 

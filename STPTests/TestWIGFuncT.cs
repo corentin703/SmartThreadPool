@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Threading;
 using Amib.Threading;
 using NUnit.Framework;
 
@@ -27,7 +29,7 @@ namespace WorkItemsGroupTests
         [Test]
         public void FuncT0()
         {
-            IWorkItemResult<int> wir = _wig.QueueWorkItem(new Func<int>(MaxInt));
+            IWorkItemResult<int> wir = _wig.QueueWorkItem(new Func<CancellationToken, int>(MaxInt));
 
             int result = wir.GetResult();
 
@@ -37,7 +39,7 @@ namespace WorkItemsGroupTests
         [Test]
         public void FuncT1()
         {
-            IWorkItemResult<bool> wir = _wig.QueueWorkItem(new Func<bool, bool>(Not), true);
+            IWorkItemResult<bool> wir = _wig.QueueWorkItem(new Func<bool, CancellationToken, bool>(Not), true);
 
             bool result = wir.Result;
 
@@ -47,7 +49,7 @@ namespace WorkItemsGroupTests
         [Test]
         public void FuncT2()
         {
-            IWorkItemResult<string> wir = _wig.QueueWorkItem(new Func<string, string, string>(string.Concat), "ABC", "xyz");
+            IWorkItemResult<string> wir = _wig.QueueWorkItem(new Func<string, string, CancellationToken, string>((s1, s2, _) => string.Concat(s1, s2)), "ABC", "xyz");
 
             string result = wir.Result;
 
@@ -57,7 +59,7 @@ namespace WorkItemsGroupTests
         [Test]
         public void FuncT3()
         {
-            IWorkItemResult<string> wir = _wig.QueueWorkItem(new Func<string, int, int, string>(Substring), "ABCDEF", 1, 2);
+            IWorkItemResult<string> wir = _wig.QueueWorkItem(new Func<string, int, int, CancellationToken, string>(Substring), "ABCDEF", 1, 2);
 
             string result = wir.Result;
 
@@ -69,29 +71,29 @@ namespace WorkItemsGroupTests
         {
             int[] numbers = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
-            IWorkItemResult<int[]> wir = _wig.QueueWorkItem(new Func<int[], int, int, int, int[]>(Subarray), numbers, 1, 2, 3);
+            IWorkItemResult<int[]> wir = _wig.QueueWorkItem(new Func<int[], int, int, int, CancellationToken, int[]>(Subarray), numbers, 1, 2, 3);
 
             int[] result = wir.Result;
 
             Assert.AreEqual(result, new int[] { 2, 3, 2, 3, 2, 3, });
         }
 
-        private int MaxInt()
+        private int MaxInt(CancellationToken cancellationToken)
         {
             return int.MaxValue;
         }
 
-        private bool Not(bool flag)
+        private bool Not(bool flag, CancellationToken cancellationToken)
         {
             return !flag;
         }
 
-        private string Substring(string s, int startIndex, int length)
+        private string Substring(string s, int startIndex, int length, CancellationToken cancellationToken)
         {
             return s.Substring(startIndex, length);
         }
 
-        private int[] Subarray(int[] numbers, int startIndex, int length, int repeat)
+        private int[] Subarray(int[] numbers, int startIndex, int length, int repeat, CancellationToken cancellationToken)
         {
             int[] result = new int[length * repeat];
             for (int i = 0; i < repeat; i++)

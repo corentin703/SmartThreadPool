@@ -94,13 +94,13 @@ namespace SmartThreadPoolTests
             });
         } 
 
-		private object DoSomeWork(object state)
+		private object DoSomeWork(object state, CancellationToken cancellationToken)
 		{ 
 			Thread.Sleep(1000);
 			return 1;
 		}
 
-        private object SignalCancel(object state)
+        private object SignalCancel(object state, CancellationToken cancellationToken)
         {
             ManualResetEvent cancelWaitHandle = state as ManualResetEvent;
             Thread.Sleep(250);

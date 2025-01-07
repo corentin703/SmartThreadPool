@@ -128,12 +128,12 @@ namespace STPTests
             });
         }
 
-        private object ReturnNull()
+        private object ReturnNull(CancellationToken cancellationToken)
         {
             return null;
         }
 
-        private void SleepForOneSecond()
+        private void SleepForOneSecond(CancellationToken cancellationToken)
         {
             Thread.Sleep(1000);
         }

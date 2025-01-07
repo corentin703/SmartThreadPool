@@ -29,7 +29,7 @@ namespace SmartThreadPoolTests
 	            stpStartInfo.StartSuspended = true;
 
 	            SmartThreadPool stp = new SmartThreadPool(stpStartInfo);
-	            IWorkItemResult wir = stp.QueueWorkItem(arg => null);
+	            IWorkItemResult wir = stp.QueueWorkItem((arg, cancellationToken) => null);
 
 	            wir.Cancel();
 
@@ -64,13 +64,13 @@ namespace SmartThreadPoolTests
 
                 SmartThreadPool stp = new SmartThreadPool();
                 IWorkItemResult wir = stp.QueueWorkItem(
-                    state =>
+                    (state, cancellationToken) =>
                     {
                         waitToStart.Set();
                         Thread.Sleep(100);
                         return null;
                     }
-                    );
+                );
 
                 waitToStart.WaitOne();
 
@@ -107,13 +107,13 @@ namespace SmartThreadPoolTests
 
             SmartThreadPool stp = new SmartThreadPool();
             IWorkItemResult wir = stp.QueueWorkItem(
-                state => {
+                (state, cancellationToken) => {
                     waitToStart.Set();
                     waitToComplete.WaitOne();
                     cancelled = SmartThreadPool.IsWorkItemCanceled;
                     return null;
                 }
-                );
+            );
 
             waitToStart.WaitOne();
 
@@ -147,14 +147,14 @@ namespace SmartThreadPoolTests
 
                 SmartThreadPool stp = new SmartThreadPool();
                 IWorkItemResult wir = stp.QueueWorkItem(
-                    state =>
+                    (state, cancellationToken) =>
                     {
                         waitToStart.Set();
                         Thread.Sleep(100);
                         waitToComplete.WaitOne();
                         return null;
                     }
-                    );
+                );
 
                 waitToStart.WaitOne();
 
@@ -189,7 +189,7 @@ namespace SmartThreadPoolTests
 
             SmartThreadPool stp = new SmartThreadPool();
             IWorkItemResult wir = stp.QueueWorkItem(
-                state => {
+                (state, cancellationToken) => {
                     waitToStart.Set();
                     waitToCancel.WaitOne();
                     SmartThreadPool.AbortOnWorkItemCancel();
@@ -230,7 +230,7 @@ namespace SmartThreadPoolTests
                 stpStartInfo.StartSuspended = true;
 
                 SmartThreadPool stp = new SmartThreadPool(stpStartInfo);
-                IWorkItemResult wir = stp.QueueWorkItem(state => null);
+                IWorkItemResult wir = stp.QueueWorkItem((state, cancellationToken) => null);
 
                 int counter = 0;
 
@@ -274,8 +274,8 @@ namespace SmartThreadPoolTests
         {
             SmartThreadPool stp = new SmartThreadPool();
             IWorkItemResult wir = stp.QueueWorkItem(
-                state => 1
-                );
+                (state, cancellationToken) => 1
+            );
 
             stp.WaitForIdle();
 

@@ -323,6 +323,11 @@ namespace Amib.Threading
         /// </summary>
         private ISTPInstancePerformanceCounters _localPCs = NullSTPInstancePerformanceCounters.Instance;
 
+        private static CancellationTokenSource _mainCancellationTokenSource = new CancellationTokenSource();
+
+        [ThreadStatic]
+        private static CancellationTokenSource _threadCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_mainCancellationTokenSource.Token);
+
         [ThreadStatic]
         private static ThreadEntry _threadEntry;
 
@@ -337,6 +342,8 @@ namespace Amib.Threading
         /// it is no longer belong to the pool.
         /// </summary>
         private event ThreadTerminationHandler _onThreadTermination;
+
+
 
         #endregion
 
@@ -365,7 +372,7 @@ namespace Amib.Threading
         /// <summary>
 		/// Constructor
 		/// </summary>
-		public SmartThreadPool()
+		public SmartThreadPool() : base(_threadCancellationTokenSource)
 		{
             _stpStartInfo = new STPStartInfo();
             Initialize();
@@ -375,8 +382,8 @@ namespace Amib.Threading
 		/// Constructor
 		/// </summary>
 		/// <param name="idleTimeout">Idle timeout in milliseconds</param>
-		public SmartThreadPool(int idleTimeout)
-		{
+		public SmartThreadPool(int idleTimeout) : base(_threadCancellationTokenSource)
+        {
             _stpStartInfo = new STPStartInfo
             {
                 IdleTimeout = idleTimeout,
@@ -388,8 +395,8 @@ namespace Amib.Threading
 		/// Constructor
 		/// </summary>
 		/// <param name="startSuspended">Set it to True to start thread pool in suspended mode; Explicit call to Start() will be needed to start the Thread pool.</param>
-		public SmartThreadPool(bool startSuspended)
-		{
+		public SmartThreadPool(bool startSuspended) : base(_threadCancellationTokenSource)
+        {
 			_stpStartInfo = new STPStartInfo
             		{
                 		StartSuspended = startSuspended,
@@ -404,8 +411,8 @@ namespace Amib.Threading
 		/// <param name="maxWorkerThreads">Upper limit of threads in the pool</param>
 		public SmartThreadPool(
 			int idleTimeout,
-			int maxWorkerThreads)
-		{
+			int maxWorkerThreads) : base(_threadCancellationTokenSource)
+        {
             _stpStartInfo = new STPStartInfo
             {
                 IdleTimeout = idleTimeout,
@@ -423,8 +430,8 @@ namespace Amib.Threading
 		public SmartThreadPool(
 			int idleTimeout,
 			int maxWorkerThreads,
-			int minWorkerThreads)
-		{
+			int minWorkerThreads) : base(_threadCancellationTokenSource)
+        {
             _stpStartInfo = new STPStartInfo
             {
                 IdleTimeout = idleTimeout,
@@ -438,8 +445,8 @@ namespace Amib.Threading
         /// Constructor
         /// </summary>
         /// <param name="stpStartInfo">A SmartThreadPool configuration that overrides the default behavior</param>
-		public SmartThreadPool(STPStartInfo stpStartInfo)
-		{
+		public SmartThreadPool(STPStartInfo stpStartInfo) : base(_threadCancellationTokenSource)
+        {
 			_stpStartInfo = new STPStartInfo(stpStartInfo);
 			Initialize();
 		}
@@ -1046,7 +1053,8 @@ namespace Amib.Threading
 					{
 						try 
 						{
-                            thread.Abort(); // Shutdown
+                            _threadCancellationTokenSource.Cancel();
+                            // thread.Abort(); // Shutdown
 						}
 						catch(SecurityException e)
 						{
@@ -1347,7 +1355,8 @@ namespace Amib.Threading
                     workItem.WasQueuedBy(wig) &&
                     !workItem.IsCanceled)
                 {
-                    threadEntry.CurrentWorkItem.GetWorkItemResult().Cancel(true);
+                    _threadCancellationTokenSource.Cancel();
+                    threadEntry.CurrentWorkItem?.GetWorkItemResult().Cancel(true);
                 }
             }
         }
@@ -1486,7 +1495,8 @@ namespace Amib.Threading
         {
             if (IsWorkItemCanceled)
             {
-                Thread.CurrentThread.Abort();
+                _mainCancellationTokenSource.Cancel();
+                //Thread.CurrentThread.Abort();
             }
         }
 
@@ -1704,11 +1714,11 @@ namespace Amib.Threading
         /// Returns when they all finish.
         /// </summary>
         /// <param name="actions">Actions to execute</param>
-        public void Join(IEnumerable<Action> actions)
+        public void Join(IEnumerable<Action<CancellationToken>> actions)
         {
             WIGStartInfo wigStartInfo = new WIGStartInfo { StartSuspended = true };
             IWorkItemsGroup workItemsGroup = CreateWorkItemsGroup(int.MaxValue, wigStartInfo);
-            foreach (Action action in actions)
+            foreach (Action<CancellationToken> action in actions)
             {
                 workItemsGroup.QueueWorkItem(action);
             }
@@ -1721,9 +1731,9 @@ namespace Amib.Threading
         /// Returns when they all finish.
         /// </summary>
         /// <param name="actions">Actions to execute</param>
-        public void Join(params Action[] actions)
+        public void Join(params Action<CancellationToken>[] actions)
         {
-            Join((IEnumerable<Action>)actions);
+            Join((IEnumerable<Action<CancellationToken>>)actions);
         }
 
         private class ChoiceIndex
@@ -1736,7 +1746,7 @@ namespace Amib.Threading
         /// Returns when the first one completes
         /// </summary>
         /// <param name="actions">Actions to execute</param>
-        public int Choice(IEnumerable<Action> actions)
+        public int Choice(IEnumerable<Action<CancellationToken>> actions)
         {
             WIGStartInfo wigStartInfo = new WIGStartInfo { StartSuspended = true };
             IWorkItemsGroup workItemsGroup = CreateWorkItemsGroup(int.MaxValue, wigStartInfo);
@@ -1746,11 +1756,11 @@ namespace Amib.Threading
             ChoiceIndex choiceIndex = new ChoiceIndex();
             
             int i = 0;
-            foreach (Action action in actions)
+            foreach (Action<CancellationToken> action in actions)
             {
-                Action act = action;
+                Action<CancellationToken> act = action;
                 int value = i;
-                workItemsGroup.QueueWorkItem(() => { act(); Interlocked.CompareExchange(ref choiceIndex._index, value, -1); anActionCompleted.Set(); });
+                workItemsGroup.QueueWorkItem((cancellationToken) => { act(cancellationToken); Interlocked.CompareExchange(ref choiceIndex._index, value, -1); anActionCompleted.Set(); });
                 ++i;
             }
 	        workItemsGroup.Start();
@@ -1764,9 +1774,9 @@ namespace Amib.Threading
         /// Returns when the first one completes
         /// </summary>
         /// <param name="actions">Actions to execute</param>
-        public int Choice(params Action[] actions)
+        public int Choice(params Action<CancellationToken>[] actions)
 	    {
-            return Choice((IEnumerable<Action>)actions);
+            return Choice((IEnumerable<Action<CancellationToken>>)actions);
         }
 
         /// <summary>
@@ -1775,14 +1785,14 @@ namespace Amib.Threading
         /// </summary>
         /// <param name="pipeState">A state context that passes </param>
         /// <param name="actions">Actions to execute in the order they should run</param>
-        public void Pipe<T>(T pipeState, IEnumerable<Action<T>> actions)
+        public void Pipe<T>(T pipeState, IEnumerable<Action<T, CancellationToken>> actions)
         {
             WIGStartInfo wigStartInfo = new WIGStartInfo { StartSuspended = true };
             IWorkItemsGroup workItemsGroup = CreateWorkItemsGroup(1, wigStartInfo);
-            foreach (Action<T> action in actions)
+            foreach (Action<T, CancellationToken> action in actions)
             {
-                Action<T> act = action;
-                workItemsGroup.QueueWorkItem(() => act(pipeState));
+                Action<T, CancellationToken> act = action;
+				workItemsGroup.QueueWorkItem((cancellationToken) => act(pipeState, cancellationToken));
             }
             workItemsGroup.Start();
             workItemsGroup.WaitForIdle();
@@ -1794,9 +1804,9 @@ namespace Amib.Threading
         /// </summary>
         /// <param name="pipeState"></param>
         /// <param name="actions">Actions to execute in the order they should run</param>
-        public void Pipe<T>(T pipeState, params Action<T>[] actions)
+        public void Pipe<T>(T pipeState, params Action<T, CancellationToken>[] actions)
         {
-            Pipe(pipeState, (IEnumerable<Action<T>>)actions);
+            Pipe(pipeState, (IEnumerable<Action<T, CancellationToken>>)actions);
         }
         #endregion
 	}

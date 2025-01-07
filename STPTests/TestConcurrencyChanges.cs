@@ -140,7 +140,7 @@ namespace SmartThreadPoolTests
 
 
         private int x = 0;
-        private object DoSomeWork(object state)
+        private object DoSomeWork(object state, CancellationToken cancellationToken)
         {
             Debug.WriteLine(Interlocked.Increment(ref x));
             Thread.Sleep(1000);

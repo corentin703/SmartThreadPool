@@ -29,7 +29,7 @@ namespace SmartThreadPoolTests
                 SmartThreadPool stp = new SmartThreadPool(stpStartInfo);
                 IWorkItemResult wir = stp.QueueWorkItem(
                     new WorkItemInfo() {Timeout = 500},
-                    state =>
+                    (state, _) =>
                     {
                         hasRun = true;
                         return null;
@@ -76,7 +76,7 @@ namespace SmartThreadPoolTests
             SmartThreadPool stp = new SmartThreadPool();
             IWorkItemResult wir = stp.QueueWorkItem(
                 new WorkItemInfo() { Timeout = 500 },
-                state =>
+                (state, _) =>
                 {
                     waitToStart.Set();
                     Thread.Sleep(1000);
@@ -109,7 +109,7 @@ namespace SmartThreadPoolTests
             IWorkItemResult wir = 
                 stp.QueueWorkItem(
                 new WorkItemInfo() { Timeout = 500 },
-                state => 1);
+                (state, _) => 1);
 
             stp.WaitForIdle();
 
@@ -141,7 +141,7 @@ namespace SmartThreadPoolTests
             SmartThreadPool stp = new SmartThreadPool();
             IWorkItemResult wir = stp.QueueWorkItem(
                 new WorkItemInfo() { Timeout = 500 },
-                state =>
+                (state, _) =>
                 {
                     waitToStart.Set();
                     Thread.Sleep(1000);

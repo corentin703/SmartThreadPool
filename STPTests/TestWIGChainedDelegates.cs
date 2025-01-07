@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 
 using Amib.Threading;
+using System.Threading;
 
 namespace WorkItemsGroupTests
 {
@@ -87,7 +88,7 @@ namespace WorkItemsGroupTests
 		}
 
 
-		private object DoWork(object state)
+		private object DoWork(object state, CancellationToken cancellationToken)
 		{
 			return null;
 		}
